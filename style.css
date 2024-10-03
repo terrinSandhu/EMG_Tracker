@@ -1,46 +1,102 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
+document.getElementById('addDiamond').addEventListener('click', addDiamond);
+document.getElementById('applyFilter').addEventListener('click', applyFilter);
+
+let diamonds = [];
+
+function addDiamond() {
+    const diamondContainer = document.getElementById('diamondContainer');
+
+    // Create a new diamond div
+    const diamond = document.createElement('div');
+    diamond.classList.add('diamond');
+
+    // Random properties for the diamond
+    const size = 100; // Fixed size
+    const step = Math.floor(Math.random() * 10) + 1; // random step
+    const locationX = Math.floor(Math.random() * 500);
+    const locationY = Math.floor(Math.random() * 500);
+    const origin = `${locationX}, ${locationY}`;
+    const history = [];
+
+    // Set the diamond properties and default position
+    diamond.dataset.size = size;
+    diamond.dataset.step = step;
+    diamond.dataset.location = `${locationX}, ${locationY}`;
+    diamond.dataset.origin = origin;
+
+    // Display properties under the diamond
+    const properties = document.createElement('div');
+    properties.classList.add('property-list');
+    properties.innerHTML = `
+        <div>Size: ${size}px</div>
+        <div>Step: ${step}</div>
+        <div>Location: (${locationX}, ${locationY})</div>
+        <div>Origin: ${origin}</div>
+    `;
+
+    // Button to show history
+    const buttonContainer = document.createElement('div');
+    buttonContainer.classList.add('button-container');
+    const historyButton = document.createElement('button');
+    historyButton.classList.add('history-btn');
+    historyButton.innerText = 'History';
+    historyButton.onclick = () => showHistory(history);
+
+    buttonContainer.appendChild(historyButton);
+    diamond.appendChild(properties);
+    diamond.appendChild(buttonContainer);
+    diamondContainer.appendChild(diamond);
+
+    // Store diamond details and track change history
+    diamonds.push({ diamond, size, step, location: `${locationX}, ${locationY}`, origin, history });
 }
 
-#controls {
-    margin-bottom: 20px;
+function showHistory(history) {
+    const historyText = history.length ? history.join('\n') : 'No changes yet';
+    alert(`Change History:\n${historyText}`);
 }
 
-#diamondContainer {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 20px;
+function applyFilter() {
+    const filter = document.getElementById('filterProperty').value;
+
+    diamonds.forEach(({ diamond, size, step, location, origin }) => {
+        if (filter === 'all') {
+            diamond.style.display = 'flex';
+        } else if (filter === 'size' && size > 100) {
+            diamond.style.display = 'flex';
+        } else if (filter === 'location' && location.split(',')[0] > 200) {
+            diamond.style.display = 'flex';
+        } else if (filter === 'origin' && origin.includes('100')) {
+            diamond.style.display = 'flex';
+        } else {
+            diamond.style.display = 'none';
+        }
+    });
 }
 
-.diamond {
-    width: 100px;
-    height: 100px;
-    background-color: lightblue;
-    position: relative;
-    transform: rotate(45deg); /* Rotating to make it look like a diamond */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-size: 12px;
-}
+// Allow property editing
+function editProperties(diamond, history) {
+    const newSize = prompt("Enter new size (current size: " + diamond.dataset.size + "):");
+    const newStep = prompt("Enter new step (current step: " + diamond.dataset.step + "):");
+    const newLocationX = prompt("Enter new X location (current X: " + diamond.dataset.location.split(',')[0] + "):");
+    const newLocationY = prompt("Enter new Y location (current Y: " + diamond.dataset.location.split(',')[1] + "):");
 
-.property-list {
-    margin-top: 10px;
-    font-size: 12px;
-    color: black;
-    transform: rotate(-45deg); /* Rotate content back to normal */
-}
+    // Update properties and track changes
+    if (newSize && newStep && newLocationX && newLocationY) {
+        diamond.dataset.size = newSize;
+        diamond.dataset.step = newStep;
+        diamond.dataset.location = `${newLocationX}, ${newLocationY}`;
 
-.button-container {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    transform: rotate(-45deg); /* Rotate button back to normal */
-}
+        // Update the displayed properties
+        const properties = diamond.querySelector('.property-list');
+        properties.innerHTML = `
+            <div>Size: ${newSize}px</div>
+            <div>Step: ${newStep}</div>
+            <div>Location: (${newLocationX}, ${newLocationY})</div>
+            <div>Origin: ${diamond.dataset.origin}</div>
+        `;
 
-button.history-btn {
-    font-size: 10px;
-    padding: 5px;
+        // Add to history
+        history.push(`Size changed to ${newSize}px, Step to ${newStep}, Location to (${newLocationX}, ${newLocationY})`);
+    }
 }
