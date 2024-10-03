@@ -1,0 +1,32 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+#controls {
+    margin-bottom: 20px;
+}
+
+#squareContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.square {
+    width: 100px;
+    height: 100px;
+    background-color: blue;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 12px;
+}
+
+.property-list {
+    margin-top: 10px;
+    font-size: 12px;
+    color: black;
+}
