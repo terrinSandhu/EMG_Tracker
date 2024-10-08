@@ -22,9 +22,11 @@ def move_image(image_path, target_folder):
     shutil.move(image_path, target_folder)
 
 def display_image(image_path):
-    """Display the image using PIL."""
+    """Display the image using PIL and ensure it closes after viewing."""
     img = Image.open(image_path)
-    img.show()
+    img.show()  # Open the image in the default viewer
+    input("Press Enter to continue...")  # Wait for user confirmation
+    img.close()  # Close the image after confirmation
 
 def main():
     # Step 1: Ask for the directory
@@ -51,7 +53,7 @@ def main():
         
         # Display the image
         print(f"Displaying: {image_name}")
-        display_image(image_path)
+        display_image(image_path)  # Image closes after pressing Enter
         
         # Ask for user input
         while True:
