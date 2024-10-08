@@ -1,7 +1,12 @@
 import os
 import shutil
 from PIL import Image
-import curses
+from pynput import keyboard
+
+# Global variables to track which key was pressed and to exit the loop
+key_pressed = None
+move_confirmed = False
+exit_program = False
 
 def ask_for_directory():
     """Prompt the user to provide a directory."""
@@ -32,58 +37,63 @@ def open_image(image_path):
     img = Image.open(image_path)
     img.show()
 
-def image_sorter(stdscr, images, source_folder, good_folder, bad_folder):
-    """Handle the image sorting functionality using curses."""
-    curses.curs_set(0)  # Hide the cursor
-    idx = 0  # Start with the first image
-    
-    while idx < len(images):
+def on_press(key):
+    global key_pressed, move_confirmed, exit_program
+    try:
+        if key == keyboard.Key.right:
+            key_pressed = 'good'
+        elif key == keyboard.Key.left:
+            key_pressed = 'bad'
+        elif key == keyboard.Key.enter:
+            move_confirmed = True
+        elif key == keyboard.Key.esc:
+            exit_program = True
+            return False  # Stop listener when 'esc' is pressed
+    except AttributeError:
+        pass
+
+def image_sorter(images, source_folder, good_folder, bad_folder):
+    global key_pressed, move_confirmed, exit_program
+    idx = 0
+
+    listener = keyboard.Listener(on_press=on_press)
+    listener.start()
+
+    while idx < len(images) and not exit_program:
         current_image = os.path.join(source_folder, images[idx])
         
         # Open the current image
         open_image(current_image)
+        print(f"\nCurrent image: {images[idx]}")
+        print("Press the right arrow to move to 'good', left arrow for 'bad'.")
+        print("Press 'Enter' to confirm moving the image.")
+        print("Press 'Esc' to quit.")
 
-        stdscr.clear()
-        stdscr.addstr(0, 0, f"Current image: {images[idx]}")
-        stdscr.addstr(1, 0, "Press the right arrow to move to 'good', left arrow for 'bad'.")
-        stdscr.addstr(2, 0, "Press 'Enter' to confirm moving the image.")
-        stdscr.addstr(3, 0, "Press 'q' to quit.")
-        
-        # Capture the key press
-        key = stdscr.getch()
+        # Wait for the user to press right or left arrow and confirm with Enter
+        while not move_confirmed and not exit_program:
+            if key_pressed == 'good':
+                print("Selected 'good'. Press 'Enter' to confirm.")
+            elif key_pressed == 'bad':
+                print("Selected 'bad'. Press 'Enter' to confirm.")
 
-        destination = None
+        # Move the image if confirmed
+        if move_confirmed and key_pressed:
+            if key_pressed == 'good':
+                move_image(current_image, good_folder)
+                print(f"Moved '{images[idx]}' to 'good'.")
+            elif key_pressed == 'bad':
+                move_image(current_image, bad_folder)
+                print(f"Moved '{images[idx]}' to 'bad'.")
+            
+            # Reset for next image
+            idx += 1
+            key_pressed = None
+            move_confirmed = False
 
-        # If left arrow key, prepare to move to 'bad'
-        if key == curses.KEY_LEFT:
-            destination = bad_folder
+    listener.stop()
 
-        # If right arrow key, prepare to move to 'good'
-        elif key == curses.KEY_RIGHT:
-            destination = good_folder
-
-        # If 'q' is pressed, quit the program
-        elif key == ord('q'):
-            break
-
-        # If destination is set (left or right arrow pressed)
-        if destination:
-            stdscr.addstr(4, 0, "Press 'Enter' to confirm.")
-            stdscr.refresh()
-            confirmation = stdscr.getch()
-
-            if confirmation == ord('\n'):
-                move_image(current_image, destination)
-                stdscr.addstr(5, 0, f"Moved '{images[idx]}' to '{destination}'")
-                idx += 1
-
-        stdscr.refresh()
-
-    # Once all images are sorted
-    stdscr.clear()
-    stdscr.addstr(0, 0, "All images have been sorted. No images left.")
-    stdscr.refresh()
-    stdscr.getch()  # Wait for any key to exit
+    if idx >= len(images):
+        print("All images have been sorted. No images left.")
 
 def main():
     # Ask for the directory containing images
@@ -99,8 +109,8 @@ def main():
         print("No images found in the directory.")
         return
 
-    # Initialize curses to handle the sorting process
-    curses.wrapper(image_sorter, images, source_folder, good_folder, bad_folder)
+    # Start sorting images
+    image_sorter(images, source_folder, good_folder, bad_folder)
 
 if __name__ == "__main__":
     main()
